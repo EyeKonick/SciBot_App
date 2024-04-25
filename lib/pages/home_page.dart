@@ -40,6 +40,26 @@ class _HomePageState extends State<HomePage> {
     "How do sex-linked traits demonstrate non-Mendelian inheritance patterns?"
   ];
 
+  String _DropDownvalue4 =
+      'How does environmental change drive species extinction?'; // Initial dropdown value
+  var _items4 = [
+    'How does environmental change drive species extinction?',
+    'Can rapid environment shifts lead to population decline and extinction?',
+    'Why is genetic diversity crucial for adapting to abrupt changes?',
+    "How do human actions worsen species' adaptation challenges?",
+    "Are there clear cases of extinction due to slow adaptation?"
+  ];
+
+  String _DropDownvalue5 =
+      'How do photosynthesis and respiration differ?'; // Initial dropdown value
+  var _items5 = [
+    'How do photosynthesis and respiration differ?',
+    'Why is photosynthesis anabolic and respiration catabolic?',
+    'What are the main products and reactants of each process?',
+    "Why is photosynthesis important for oxygen production and ecosystem balance?",
+    "How does respiration contribute to energy release in both plants and animals?"
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,6 +139,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.white, // Choose your desired color
+                      width: 1.0, // Adjust the width of the bottom outline
+                    ),
+                  ),
+                ),
                 margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +175,12 @@ class _HomePageState extends State<HomePage> {
                           items: _items1.map((String item) {
                             return DropdownMenuItem<String>(
                               value: item,
-                              child: Text(item),
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ), // Adjust font size here
+                              ),
                             );
                           }).toList(),
                           onChanged: (String? newValue) {
@@ -167,6 +200,14 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.white, // Choose your desired color
+                      width: 1.0, // Adjust the width of the bottom outline
+                    ),
+                  ),
+                ),
                 margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +216,7 @@ class _HomePageState extends State<HomePage> {
                       'Lifestyle Impact on Respiratory and Circulatory Systems',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -194,7 +235,12 @@ class _HomePageState extends State<HomePage> {
                           items: _items2.map((String item) {
                             return DropdownMenuItem<String>(
                               value: item,
-                              child: Text(item),
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ), // Adjust font size here
+                              ),
                             );
                           }).toList(),
                           onChanged: (String? newValue) {
@@ -214,15 +260,23 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.white, // Choose your desired color
+                      width: 1.0, // Adjust the width of the bottom outline
+                    ),
+                  ),
+                ),
                 margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      ' Patterns of Non-Mendelian Inheritance',
+                      'Patterns of Non-Mendelian Inheritance',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -241,12 +295,137 @@ class _HomePageState extends State<HomePage> {
                           items: _items3.map((String item) {
                             return DropdownMenuItem<String>(
                               value: item,
-                              child: Text(item),
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ), // Adjust font size here
+                              ),
                             );
                           }).toList(),
                           onChanged: (String? newValue) {
                             setState(() {
                               _DropDownvalue3 = newValue!;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          iconSize: 20,
+                          style: TextStyle(color: Colors.white),
+                          underline: Container(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.white, // Choose your desired color
+                      width: 1.0, // Adjust the width of the bottom outline
+                    ),
+                  ),
+                ),
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Extinction & Environmental Change',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    AnimatedContainer(
+                      color: Colors.transparent,
+                      alignment: Alignment.topLeft,
+                      padding: EdgeInsets.all(16),
+                      duration: Duration(milliseconds: 300),
+                      height: _DropDownvalue4 == null ? 56 : null,
+                      curve: Curves.easeInOut,
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          dropdownColor: AppColor.background2,
+                          value: _DropDownvalue4,
+                          items: _items4.map((String item) {
+                            return DropdownMenuItem<String>(
+                              value: item,
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ), // Adjust font size here
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _DropDownvalue4 = newValue!;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          iconSize: 20,
+                          style: TextStyle(color: Colors.white),
+                          underline: Container(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.white, // Choose your desired color
+                      width: 1.0, // Adjust the width of the bottom outline
+                    ),
+                  ),
+                ),
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Photosynthesis vs. Respiration: Features & Importance',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    AnimatedContainer(
+                      color: Colors.transparent,
+                      alignment: Alignment.topLeft,
+                      padding: EdgeInsets.all(16),
+                      duration: Duration(milliseconds: 300),
+                      height: _DropDownvalue5 == null ? 56 : null,
+                      curve: Curves.easeInOut,
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          dropdownColor: AppColor.background2,
+                          value: _DropDownvalue5,
+                          items: _items5.map((String item) {
+                            return DropdownMenuItem<String>(
+                              value: item,
+                              child: Text(
+                                item,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                ), // Adjust font size here
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _DropDownvalue5 = newValue!;
                             });
                           },
                           borderRadius: BorderRadius.circular(8),
