@@ -175,11 +175,37 @@ class _HomePageState extends State<HomePage> {
                           items: _items1.map((String item) {
                             return DropdownMenuItem<String>(
                               value: item,
-                              child: Text(
-                                item,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                ), // Adjust font size here
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    PageRouteBuilder(
+                                      transitionDuration: Duration(
+                                          milliseconds:
+                                              400), // Set animation duration
+                                      pageBuilder: (_, __, ___) =>
+                                          ChatAppScaffold(
+                                        message: item,
+                                      ),
+                                      transitionsBuilder:
+                                          (_, animation, __, child) {
+                                        return SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: const Offset(-1.0, 0.0),
+                                            end: Offset.zero,
+                                          ).animate(animation),
+                                          child: child,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
+                                child: Text(
+                                  item,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                  ), // Adjust font size here
+                                ),
                               ),
                             );
                           }).toList(),
