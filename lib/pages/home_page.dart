@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> {
                   border: Border.all(color: Colors.white, width: 3),
                 ),
                 child: Text(
-                  '''             Hello there! Welcome to our educational app. I'm your AI Chatbot assistant, created by Joecil Villanueva, a grade 9 science teacher. My primary goal is to help you learn and understand various science topics covered in the Most Essential Learning Competencies (MELCs) defined by the Department of Education in the Philippines.
+                  '''Hello there! Welcome to our educational app. I'm your AI Chatbot assistant, created by Joecil Villanueva, a grade 9 science teacher. My primary goal is to help you learn and understand various science topics covered in the Most Essential Learning Competencies (MELCs) defined by the Department of Education in the Philippines.
       
       In this app, you can ask me questions related to the science curriculum, and I'll do my best to provide you with accurate and helpful answers. However, it's important to note that my responses are based on the topics within the MELCs, and I'm unable to provide information on subjects outside of that scope.
       
