@@ -33,7 +33,12 @@ class GradientIcon extends StatelessWidget {
 }
 
 class ChatAppScaffold extends StatefulWidget {
-  const ChatAppScaffold({super.key});
+  final String? _message;
+
+  const ChatAppScaffold({
+    super.key,
+    String? message = null,
+  }) : _message = message;
 
   @override
   State<ChatAppScaffold> createState() => _ChatAppScaffoldState();
@@ -105,7 +110,10 @@ class _ChatAppScaffoldState extends State<ChatAppScaffold> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: ChatApp(key: refreshKey),
+          child: ChatApp(
+            key: refreshKey,
+            message: widget._message,
+          ),
         ),
       ),
     );
@@ -113,7 +121,12 @@ class _ChatAppScaffoldState extends State<ChatAppScaffold> {
 }
 
 class ChatApp extends StatefulWidget {
-  const ChatApp({super.key});
+  final String? _message;
+
+  const ChatApp({
+    super.key,
+    String? message = null,
+  }) : _message = message;
 
   @override
   State<ChatApp> createState() => _ChatAppState();
@@ -135,10 +148,18 @@ class _ChatAppState extends State<ChatApp> {
           You must refuse to answer questions not directly relevant to the topics in the MELCs. Greet your student, make sure to mention your creator Joecil Villanueva. You can answer questions about yourself. Do not mention that you are limited to the topics within the MELCs. List the topics in the MELCs ONLY WHEN ASKED.""",
       );
 
+      if (widget._message != null) {
+        _session.queueUserMessage(widget._message!);
+      }
+
       return;
     }
 
     _session = MessageSession.fromJsonEncrypted(history);
+
+    if (widget._message != null) {
+      _session.queueUserMessage(widget._message!);
+    }
   }
 
   @override
@@ -246,7 +267,7 @@ class _ChatAppState extends State<ChatApp> {
                                 color: Colors.deepOrange[200],
                               ),
                               child: Text(
-                                snapshot.data!,
+                                snapshot.data ?? '',
                               ),
                             );
                           },
