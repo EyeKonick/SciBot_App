@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:flutter_chat/flutter_chat.dart';
 import 'package:scibot_sample/pages/home_page.dart';
+import 'package:scibot_sample/pages/landing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initLocalStorage();
-  initApi('api.key');
-
+  initApi('env.api');
   runApp(const Main());
 }
 
@@ -27,7 +27,7 @@ class Main extends StatelessWidget {
         switch (settings.name) {
           case "/":
             return MaterialPageRoute(
-              builder: (context) => const HomePage(),
+              builder: (context) => const LandingPage(),
               settings: const RouteSettings(name: "/"),
             );
           default:

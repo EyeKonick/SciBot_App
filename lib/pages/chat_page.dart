@@ -26,7 +26,7 @@ class GradientIcon extends StatelessWidget {
       child: Icon(
         icon,
         size: size,
-        color: Colors.white, // Required, but irrelevant
+        color: Colors.white,
       ),
     );
   }
@@ -58,8 +58,7 @@ class _ChatAppScaffoldState extends State<ChatAppScaffold> {
             Navigator.push(
               context,
               PageRouteBuilder(
-                transitionDuration:
-                    Duration(milliseconds: 400), // Set animation duration
+                transitionDuration: Duration(milliseconds: 400),
                 pageBuilder: (_, __, ___) => HomePage(),
                 transitionsBuilder: (_, animation, __, child) {
                   return SlideTransition(
