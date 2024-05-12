@@ -1,3 +1,4 @@
+import 'package:defer_pointer/defer_pointer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat/flutter_chat.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -357,327 +358,344 @@ class _ChatAppState extends State<ChatApp> {
       });
     });
 
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                isDense: true,
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                suffixIcon: _relevantSearchMessageBoxes.isEmpty
-                    ? null
-                    : IntrinsicWidth(
-                        child: Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            "$_searchResultIndex / ${_relevantSearchMessageBoxes.length} ${_relevantSearchMessageBoxes.length == 1 ? "box" : "boxes"}",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                hintText: "Search",
-                hintStyle: TextStyle(color: Colors.white),
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 4,
-                ),
-              ),
-              style: TextStyle(color: Colors.white),
-            ),
-            if (_relevantSearchMessageBoxes.isNotEmpty)
-              Positioned(
-                right: 100,
-                bottom: 0,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if (_searchResultIndex! > 1) {
-                            _searchResultIndex = _searchResultIndex! - 1;
-
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((timeStamp) {
-                              _itemScrollController.scrollTo(
-                                index: _relevantSearchMessageBoxes[
-                                    _searchResultIndex! - 1],
-                                duration: const Duration(milliseconds: 500),
-                              );
-                            });
-                          }
-                        });
-                      },
-                      icon: Icon(Icons.chevron_left),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if (_searchResultIndex! <
-                              _relevantSearchMessageBoxes.length) {
-                            _searchResultIndex = _searchResultIndex! + 1;
-
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((timeStamp) {
-                              _itemScrollController.scrollTo(
-                                index: _relevantSearchMessageBoxes[
-                                    _searchResultIndex! - 1],
-                                curve: Curves.easeInOut,
-                                duration: const Duration(milliseconds: 500),
-                              );
-                            });
-                          }
-                        });
-                      },
-                      icon: Icon(Icons.chevron_right),
-                    ),
-                  ],
-                ),
-              )
-            else
-              const SizedBox(),
-          ],
-        ),
-        Expanded(
-          child: Stack(
+    return DeferredPointerHandler(
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              ScrollablePositionedList.builder(
-                itemCount: historyModel.length,
-                itemBuilder: (context, index) {
-                  return historyModel[index];
-                },
-                itemScrollController: _itemScrollController,
-                scrollOffsetController: _scrollOffsetController,
-              ),
-              Positioned(
-                bottom: 5,
-                left: 5,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  child: Text(_topic == null
-                      ? "(Select a topic)"
-                      : "Topic: ${_topic!.stringify()}"),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 50,
-          child: ValueListenableBuilder(
-              valueListenable: _isRespondingNotifier,
-              builder: (context, value, child) {
-                return ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    Topic(
-                      disabled: value,
-                      onClick: () {
-                        _saveHistory();
-
-                        setState(() {
-                          _topic = _TopicEnum.biodiversity;
-                          _saveTopic();
-
-                          final biodiversityHistory =
-                              localStorage.getItem(_topic!.asKey());
-
-                          if (biodiversityHistory == null) {
-                            _session = MessageSession();
-                            _session.queueSystemMessage(
-                                getBiodiversitySysMessage());
-                            _isRespondingNotifier.value = true;
-
-                            return;
-                          }
-
-                          _session = MessageSession.fromJsonEncrypted(
-                            biodiversityHistory,
-                          );
-                        });
-                      },
-                      text: "Biodiversity",
-                    ),
-                    const SizedBox(width: 8),
-                    Topic(
-                      disabled: value,
-                      onClick: () {
-                        _saveHistory();
-
-                        setState(() {
-                          _topic = _TopicEnum.heredityAndVariation;
-                          _saveTopic();
-
-                          final heredityHistory =
-                              localStorage.getItem(_topic!.asKey());
-
-                          if (heredityHistory == null) {
-                            _session = MessageSession();
-                            _session.queueSystemMessage(
-                                getHeredityAndVariationSysMessage());
-                            _isRespondingNotifier.value = true;
-
-                            return;
-                          }
-
-                          _session = MessageSession.fromJsonEncrypted(
-                            heredityHistory,
-                          );
-                        });
-                      },
-                      text: "Heredity and Variation",
-                    ),
-                    const SizedBox(width: 8),
-                    Topic(
-                      disabled: value,
-                      onClick: () {
-                        _saveHistory();
-
-                        setState(() {
-                          _topic = _TopicEnum.circulationAndGasExchange;
-                          _saveTopic();
-
-                          final circulationHistory =
-                              localStorage.getItem(_topic!.asKey());
-
-                          if (circulationHistory == null) {
-                            _session = MessageSession();
-                            _session.queueSystemMessage(
-                                getCirculationAndGasExchangeSysMessage());
-                            _isRespondingNotifier.value = true;
-
-                            return;
-                          }
-
-                          _session = MessageSession.fromJsonEncrypted(
-                            circulationHistory,
-                          );
-                        });
-                      },
-                      text: "Circulation and Gas Exchange",
-                    ),
-                    const SizedBox(width: 8),
-                    Topic(
-                      disabled: value,
-                      onClick: () {
-                        _saveHistory();
-
-                        setState(() {
-                          _topic = _TopicEnum.photosynthesis;
-                          _saveTopic();
-
-                          final photosynthesisHistory =
-                              localStorage.getItem(_topic!.asKey());
-
-                          if (photosynthesisHistory == null) {
-                            _session = MessageSession();
-                            _session.queueSystemMessage(
-                                getPhotosynthesisSysMessage());
-                            _isRespondingNotifier.value = true;
-
-                            return;
-                          }
-
-                          _session = MessageSession.fromJsonEncrypted(
-                            photosynthesisHistory,
-                          );
-                        });
-                      },
-                      text: "Photosynthesis",
-                    ),
-                  ],
-                );
-              }),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _messageController,
-                style: TextStyle(color: Colors.white),
+              TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   isDense: true,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(color: AppColor.primary),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  suffixIcon: _relevantSearchMessageBoxes.isEmpty
+                      ? null
+                      : IntrinsicWidth(
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              "$_searchResultIndex / ${_relevantSearchMessageBoxes.length} ${_relevantSearchMessageBoxes.length == 1 ? "box" : "boxes"}",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                  hintText: "Search",
+                  hintStyle: TextStyle(color: Colors.white),
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
                   ),
                 ),
+                style: TextStyle(color: Colors.white),
               ),
+              if (_relevantSearchMessageBoxes.isNotEmpty)
+                Positioned(
+                  right: 0,
+                  bottom: -60,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Row(
+                      children: [
+                        DeferPointer(
+                          child: IconButton(
+                            color: Colors.white,
+                            onPressed: () {
+                              setState(() {
+                                if (_searchResultIndex! > 1) {
+                                  _searchResultIndex = _searchResultIndex! - 1;
+
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((timeStamp) {
+                                    _itemScrollController.scrollTo(
+                                      index: _relevantSearchMessageBoxes[
+                                          _searchResultIndex! - 1],
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                    );
+                                  });
+                                }
+                              });
+                            },
+                            icon: Icon(Icons.chevron_left),
+                          ),
+                        ),
+                        DeferPointer(
+                          paintOnTop: true,
+                          child: IconButton(
+                            color: Colors.white,
+                            onPressed: () {
+                              setState(() {
+                                if (_searchResultIndex! <
+                                    _relevantSearchMessageBoxes.length) {
+                                  _searchResultIndex = _searchResultIndex! + 1;
+
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((timeStamp) {
+                                    _itemScrollController.scrollTo(
+                                      index: _relevantSearchMessageBoxes[
+                                          _searchResultIndex! - 1],
+                                      curve: Curves.easeInOut,
+                                      duration:
+                                          const Duration(milliseconds: 500),
+                                    );
+                                  });
+                                }
+                              });
+                            },
+                            icon: Icon(Icons.chevron_right),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(),
+            ],
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                ScrollablePositionedList.builder(
+                  itemCount: historyModel.length,
+                  itemBuilder: (context, index) {
+                    return historyModel[index];
+                  },
+                  itemScrollController: _itemScrollController,
+                  scrollOffsetController: _scrollOffsetController,
+                ),
+                Positioned(
+                  bottom: 5,
+                  left: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                    child: Text(_topic == null
+                        ? "(Select a topic)"
+                        : "Topic: ${_topic!.stringify()}"),
+                  ),
+                ),
+              ],
             ),
-            ValueListenableBuilder(
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 50,
+            child: ValueListenableBuilder(
                 valueListenable: _isRespondingNotifier,
                 builder: (context, value, child) {
-                  return IconButton(
-                    onPressed: value
-                        ? null
-                        : () {
-                            if (_messageController.text.isEmpty) {
+                  return ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      Topic(
+                        disabled: value,
+                        onClick: () {
+                          _saveHistory();
+
+                          setState(() {
+                            _topic = _TopicEnum.biodiversity;
+                            _saveTopic();
+
+                            final biodiversityHistory =
+                                localStorage.getItem(_topic!.asKey());
+
+                            if (biodiversityHistory == null) {
+                              _session = MessageSession();
+                              _session.queueSystemMessage(
+                                  getBiodiversitySysMessage());
+                              _isRespondingNotifier.value = true;
+
                               return;
                             }
 
-                            setState(() {
-                              _session
-                                  .queueUserMessage(_messageController.text);
-                              _isRespondingNotifier.value = true;
-                              _messageController.text = "";
-
-                              final lastIndex = historyModel
-                                      .where(
-                                          (element) => !(element is SizedBox))
-                                      .length -
-                                  1;
-
-                              WidgetsBinding.instance
-                                  .addPostFrameCallback((timeStamp) {
-                                _itemScrollController.scrollTo(
-                                  index: lastIndex,
-                                  duration: const Duration(seconds: 1),
-                                  curve: Curves.easeInOut,
-                                );
-                              });
-                            });
-                          },
-                    icon: GradientIcon(
-                      Icons.send,
-                      gradient: LinearGradient(
-                        colors: [AppColor.primary, AppColor.secondary],
+                            _session = MessageSession.fromJsonEncrypted(
+                              biodiversityHistory,
+                            );
+                          });
+                        },
+                        text: "Biodiversity",
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Topic(
+                        disabled: value,
+                        onClick: () {
+                          _saveHistory();
+
+                          setState(() {
+                            _topic = _TopicEnum.heredityAndVariation;
+                            _saveTopic();
+
+                            final heredityHistory =
+                                localStorage.getItem(_topic!.asKey());
+
+                            if (heredityHistory == null) {
+                              _session = MessageSession();
+                              _session.queueSystemMessage(
+                                  getHeredityAndVariationSysMessage());
+                              _isRespondingNotifier.value = true;
+
+                              return;
+                            }
+
+                            _session = MessageSession.fromJsonEncrypted(
+                              heredityHistory,
+                            );
+                          });
+                        },
+                        text: "Heredity and Variation",
+                      ),
+                      const SizedBox(width: 8),
+                      Topic(
+                        disabled: value,
+                        onClick: () {
+                          _saveHistory();
+
+                          setState(() {
+                            _topic = _TopicEnum.circulationAndGasExchange;
+                            _saveTopic();
+
+                            final circulationHistory =
+                                localStorage.getItem(_topic!.asKey());
+
+                            if (circulationHistory == null) {
+                              _session = MessageSession();
+                              _session.queueSystemMessage(
+                                  getCirculationAndGasExchangeSysMessage());
+                              _isRespondingNotifier.value = true;
+
+                              return;
+                            }
+
+                            _session = MessageSession.fromJsonEncrypted(
+                              circulationHistory,
+                            );
+                          });
+                        },
+                        text: "Circulation and Gas Exchange",
+                      ),
+                      const SizedBox(width: 8),
+                      Topic(
+                        disabled: value,
+                        onClick: () {
+                          _saveHistory();
+
+                          setState(() {
+                            _topic = _TopicEnum.photosynthesis;
+                            _saveTopic();
+
+                            final photosynthesisHistory =
+                                localStorage.getItem(_topic!.asKey());
+
+                            if (photosynthesisHistory == null) {
+                              _session = MessageSession();
+                              _session.queueSystemMessage(
+                                  getPhotosynthesisSysMessage());
+                              _isRespondingNotifier.value = true;
+
+                              return;
+                            }
+
+                            _session = MessageSession.fromJsonEncrypted(
+                              photosynthesisHistory,
+                            );
+                          });
+                        },
+                        text: "Photosynthesis",
+                      ),
+                    ],
                   );
                 }),
-            // NOTE: Autosave Implemented
-            // IconButton(
-            //   onPressed: _saveHistory,
-            //   icon: GradientIcon(
-            //     Icons.save,
-            //     gradient: LinearGradient(
-            //       colors: [
-            //         AppColor.primary,
-            //         AppColor.secondary,
-            //       ],
-            //     ),
-            //   ),
-            // )
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _messageController,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide(color: AppColor.primary),
+                    ),
+                  ),
+                ),
+              ),
+              ValueListenableBuilder(
+                  valueListenable: _isRespondingNotifier,
+                  builder: (context, value, child) {
+                    return IconButton(
+                      onPressed: value
+                          ? null
+                          : () {
+                              if (_messageController.text.isEmpty) {
+                                return;
+                              }
+
+                              setState(() {
+                                _session
+                                    .queueUserMessage(_messageController.text);
+                                _isRespondingNotifier.value = true;
+                                _messageController.text = "";
+
+                                final lastIndex = historyModel
+                                        .where(
+                                            (element) => !(element is SizedBox))
+                                        .length -
+                                    1;
+
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((timeStamp) {
+                                  _itemScrollController.scrollTo(
+                                    index: lastIndex,
+                                    duration: const Duration(seconds: 1),
+                                    curve: Curves.easeInOut,
+                                  );
+                                });
+                              });
+                            },
+                      icon: GradientIcon(
+                        Icons.send,
+                        gradient: LinearGradient(
+                          colors: [AppColor.primary, AppColor.secondary],
+                        ),
+                      ),
+                    );
+                  }),
+              // NOTE: Autosave Implemented
+              // IconButton(
+              //   onPressed: _saveHistory,
+              //   icon: GradientIcon(
+              //     Icons.save,
+              //     gradient: LinearGradient(
+              //       colors: [
+              //         AppColor.primary,
+              //         AppColor.secondary,
+              //       ],
+              //     ),
+              //   ),
+              // )
+            ],
+          ),
+        ],
+      ),
     );
   }
 
