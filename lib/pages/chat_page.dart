@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat/flutter_chat.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:highlight_text/highlight_text.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:scibot_sample/pages/home_page.dart';
 import 'package:scibot_sample/style/app_color.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class GradientIcon extends StatelessWidget {
   final IconData icon;
@@ -134,9 +136,14 @@ class ChatApp extends StatefulWidget {
 
 class _ChatAppState extends State<ChatApp> {
   final _messageController = TextEditingController();
+  final _searchController = TextEditingController();
   final _isRespondingNotifier = ValueNotifier(false);
+  final _scrollOffsetController = ScrollOffsetController();
+  final _itemScrollController = ItemScrollController();
+  final _relevantSearchMessageBoxes = <int>[];
 
   MessageSession _session = MessageSession();
+  int? _searchResultIndex = null;
   _TopicEnum? _topic = null;
 
   @override
@@ -169,136 +176,289 @@ class _ChatAppState extends State<ChatApp> {
     }
   }
 
+  // NOTE: Logic:
+  // 1. Intialization -> Check what history was last saved, and start on that history.
+  //      If opening for the first time, by default, start on Biodiversity.
+  //
+  // 2. Building -> If the last message in the history is from an Assistant, the possibleResponse is NOT null.
+  //      When the possibleResponse is done, the _saveHistory() and _saveTopic() functions are called.
+  //      The _isRespondingNotifier is set to false. NOTE: More on ValueNotifier @ (https://api.flutter.dev/flutter/foundation/ValueNotifier-class.html)
+  //      The addPostFrameCallback is used to tell flutter to call a function AFTER the build method finishes.
+  //      Inside addPostFrameCallback, we scroll to the bottom of the chat. And we setup a listener for _searchController.
+  //
+  // 3. User Message -> If the user submits a message, we call the _session.queueUserMessage() function with the message specified.
+  //      The _isRespondingNotifier is set to true.
+  //      Then a rebuild is triggered.
+  //      BACK TO STEP 2.
+
   @override
   Widget build(BuildContext context) {
     // NOTE: when play() is called, it will return a Stream<String> if the last message in its history does not come from an Assistant
     final possibleResponse = _session.play();
 
+    final historyModel = <Widget?>[
+      ..._session.history.map(
+        (record) => Row(
+          mainAxisAlignment: record.role == "User"
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
+          children: [
+            record.role == "Assistant"
+                ? const Icon(
+                    Icons.outlet_sharp,
+                    color: AppColor.primary,
+                  )
+                : const SizedBox(),
+            Container(
+              margin: const EdgeInsets.only(
+                top: 10,
+                left: 10,
+                right: 10,
+              ),
+              constraints: const BoxConstraints(maxWidth: 250),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: record.role == "Assistant"
+                    ? LinearGradient(colors: [
+                        AppColor.primary,
+                        AppColor.secondary,
+                      ])
+                    : LinearGradient(colors: [
+                        AppColor.secondary,
+                        AppColor.secondary,
+                      ]),
+              ),
+              child: TextHighlight(
+                text: record.message,
+                words: _searchController.text.isEmpty
+                    ? {}
+                    : {
+                        _searchController.text: HighlightedWord(
+                          decoration: BoxDecoration(
+                            color: Colors.yellow,
+                          ),
+                        ),
+                      },
+                textStyle: TextStyle(color: Colors.white),
+              ),
+            ),
+            record.role == "User"
+                ? const Icon(
+                    Icons.face,
+                    color: AppColor.secondary,
+                  )
+                : const SizedBox(),
+          ],
+        ),
+      ),
+      possibleResponse == null
+          ? null
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.outlet_sharp,
+                  color: AppColor.primary,
+                ),
+                StreamBuilder(
+                  stream: possibleResponse,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        margin: const EdgeInsets.only(
+                          top: 10,
+                          left: 10,
+                          right: 10,
+                        ),
+                        constraints: const BoxConstraints(maxWidth: 275),
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [
+                            AppColor.primary,
+                            AppColor.secondary,
+                          ]),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: SpinKitRing(
+                          color: const Color.fromARGB(
+                            255,
+                            197,
+                            197,
+                            197,
+                          ),
+                          size: 25,
+                          lineWidth: 4,
+                        ),
+                      );
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(
+                        top: 10,
+                        left: 10,
+                        right: 10,
+                      ),
+                      constraints: const BoxConstraints(maxWidth: 275),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: [AppColor.primary, AppColor.secondary]),
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.deepOrange[200],
+                      ),
+                      child: Text(
+                        snapshot.data ?? '',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+      const SizedBox(height: 45),
+    ].whereType<Widget>().toList();
+
     if (possibleResponse != null) {
-      possibleResponse.listen(null, onDone: () {
-        _saveHistory();
-        _saveTopic();
-        _isRespondingNotifier.value = false;
-      });
+      possibleResponse.listen(
+        null,
+        onDone: () {
+          _saveHistory();
+          _saveTopic();
+          _isRespondingNotifier.value = false;
+
+          final lastIndex =
+              historyModel.where((element) => !(element is SizedBox)).length -
+                  1;
+
+          setState(() {
+            _itemScrollController.scrollTo(
+              index: lastIndex,
+              alignment: 0,
+              curve: Curves.easeInOut,
+              duration: const Duration(seconds: 1),
+            );
+          });
+        },
+      );
     }
+
+    _refreshSearchResult();
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _searchController.addListener(() {
+        setState(() {
+          _refreshSearchResult();
+
+          if (_relevantSearchMessageBoxes.isNotEmpty) {
+            _searchResultIndex = 1;
+          }
+        });
+      });
+    });
 
     return Column(
       children: [
-        Expanded(
-          child: Stack(
-            children: [
-              ListView(
-                children: [
-                  const SizedBox(height: 35),
-                  ..._session.history.map(
-                    (record) => Row(
-                      mainAxisAlignment: record.role == "User"
-                          ? MainAxisAlignment.end
-                          : MainAxisAlignment.start,
-                      children: [
-                        record.role == "Assistant"
-                            ? const Icon(
-                                Icons.outlet_sharp,
-                                color: AppColor.primary,
-                              )
-                            : const SizedBox(),
-                        Container(
-                          margin: const EdgeInsets.only(
-                            top: 10,
-                            left: 10,
-                            right: 10,
-                          ),
-                          constraints: const BoxConstraints(maxWidth: 250),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: record.role == "User"
-                                ? AppColor.secondary
-                                : AppColor.primary,
-                          ),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                isDense: true,
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Colors.white,
+                  size: 32,
+                ),
+                suffixIcon: _relevantSearchMessageBoxes.isEmpty
+                    ? null
+                    : IntrinsicWidth(
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
-                            record.message,
+                            "$_searchResultIndex / ${_relevantSearchMessageBoxes.length} ${_relevantSearchMessageBoxes.length == 1 ? "box" : "boxes"}",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
-                        record.role == "User"
-                            ? const Icon(
-                                Icons.face,
-                                color: AppColor.secondary,
-                              )
-                            : const SizedBox(),
-                      ],
-                    ),
-                  ),
-                  possibleResponse == null
-                      ? const SizedBox()
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.outlet_sharp,
-                              color: AppColor.primary,
-                            ),
-                            StreamBuilder(
-                              stream: possibleResponse,
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return Container(
-                                    margin: const EdgeInsets.only(
-                                      top: 10,
-                                      left: 10,
-                                      right: 10,
-                                    ),
-                                    constraints:
-                                        const BoxConstraints(maxWidth: 275),
-                                    padding: const EdgeInsets.all(24),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(colors: [
-                                        AppColor.primary,
-                                        AppColor.secondary
-                                      ]),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: SpinKitRing(
-                                      color: const Color.fromARGB(
-                                          255, 197, 197, 197),
-                                      size: 25,
-                                      lineWidth: 4,
-                                    ),
-                                  );
-                                }
+                      ),
+                hintText: "Search",
+                hintStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 4,
+                ),
+              ),
+              style: TextStyle(color: Colors.white),
+            ),
+            if (_relevantSearchMessageBoxes.isNotEmpty)
+              Positioned(
+                right: 100,
+                bottom: 0,
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_searchResultIndex! > 1) {
+                            _searchResultIndex = _searchResultIndex! - 1;
 
-                                return Container(
-                                  margin: const EdgeInsets.only(
-                                    top: 10,
-                                    left: 10,
-                                    right: 10,
-                                  ),
-                                  constraints:
-                                      const BoxConstraints(maxWidth: 275),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(colors: [
-                                      AppColor.primary,
-                                      AppColor.secondary
-                                    ]),
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: Colors.deepOrange[200],
-                                  ),
-                                  child: Text(
-                                    snapshot.data ?? '',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                ],
+                            WidgetsBinding.instance
+                                .addPostFrameCallback((timeStamp) {
+                              _itemScrollController.scrollTo(
+                                index: _relevantSearchMessageBoxes[
+                                    _searchResultIndex! - 1],
+                                duration: const Duration(milliseconds: 500),
+                              );
+                            });
+                          }
+                        });
+                      },
+                      icon: Icon(Icons.chevron_left),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_searchResultIndex! <
+                              _relevantSearchMessageBoxes.length) {
+                            _searchResultIndex = _searchResultIndex! + 1;
+
+                            WidgetsBinding.instance
+                                .addPostFrameCallback((timeStamp) {
+                              _itemScrollController.scrollTo(
+                                index: _relevantSearchMessageBoxes[
+                                    _searchResultIndex! - 1],
+                                curve: Curves.easeInOut,
+                                duration: const Duration(milliseconds: 500),
+                              );
+                            });
+                          }
+                        });
+                      },
+                      icon: Icon(Icons.chevron_right),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const SizedBox(),
+          ],
+        ),
+        Expanded(
+          child: Stack(
+            children: [
+              ScrollablePositionedList.builder(
+                itemCount: historyModel.length,
+                itemBuilder: (context, index) {
+                  return historyModel[index];
+                },
+                itemScrollController: _itemScrollController,
+                scrollOffsetController: _scrollOffsetController,
               ),
               Positioned(
-                top: 5,
+                bottom: 5,
                 left: 5,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -348,7 +508,8 @@ class _ChatAppState extends State<ChatApp> {
                           }
 
                           _session = MessageSession.fromJsonEncrypted(
-                              biodiversityHistory);
+                            biodiversityHistory,
+                          );
                         });
                       },
                       text: "Biodiversity",
@@ -375,8 +536,9 @@ class _ChatAppState extends State<ChatApp> {
                             return;
                           }
 
-                          _session =
-                              MessageSession.fromJsonEncrypted(heredityHistory);
+                          _session = MessageSession.fromJsonEncrypted(
+                            heredityHistory,
+                          );
                         });
                       },
                       text: "Heredity and Variation",
@@ -404,7 +566,8 @@ class _ChatAppState extends State<ChatApp> {
                           }
 
                           _session = MessageSession.fromJsonEncrypted(
-                              circulationHistory);
+                            circulationHistory,
+                          );
                         });
                       },
                       text: "Circulation and Gas Exchange",
@@ -432,7 +595,8 @@ class _ChatAppState extends State<ChatApp> {
                           }
 
                           _session = MessageSession.fromJsonEncrypted(
-                              photosynthesisHistory);
+                            photosynthesisHistory,
+                          );
                         });
                       },
                       text: "Photosynthesis",
@@ -473,6 +637,21 @@ class _ChatAppState extends State<ChatApp> {
                                   .queueUserMessage(_messageController.text);
                               _isRespondingNotifier.value = true;
                               _messageController.text = "";
+
+                              final lastIndex = historyModel
+                                      .where(
+                                          (element) => !(element is SizedBox))
+                                      .length -
+                                  1;
+
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((timeStamp) {
+                                _itemScrollController.scrollTo(
+                                  index: lastIndex,
+                                  duration: const Duration(seconds: 1),
+                                  curve: Curves.easeInOut,
+                                );
+                              });
                             });
                           },
                     icon: GradientIcon(
@@ -500,6 +679,29 @@ class _ChatAppState extends State<ChatApp> {
         ),
       ],
     );
+  }
+
+  void _refreshSearchResult() {
+    _relevantSearchMessageBoxes.clear();
+
+    if (_searchController.text.isEmpty) {
+      return;
+    }
+
+    for (final (index, message) in _session.history.indexed) {
+      if (message.message
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()) &&
+          !_relevantSearchMessageBoxes.contains(index)) {
+        _relevantSearchMessageBoxes.add(index);
+      }
+    }
+
+    if (_searchResultIndex != null &&
+        _relevantSearchMessageBoxes.isNotEmpty &&
+        _searchResultIndex! >= _relevantSearchMessageBoxes.length) {
+      _searchResultIndex = _relevantSearchMessageBoxes.length;
+    }
   }
 
   void _saveHistory() {
