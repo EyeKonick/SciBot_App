@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:scibot_sample/pages/chat_page.dart';
 import 'package:scibot_sample/pages/home_page.dart';
 import 'package:scibot_sample/style/app_color.dart';
 

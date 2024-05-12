@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:flutter_chat/flutter_chat.dart';
-import 'package:scibot_sample/pages/home_page.dart';
 import 'package:scibot_sample/pages/landing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initLocalStorage();
-  initApi('env.api');
+  initApi('api.key');
   runApp(const Main());
 }
 
